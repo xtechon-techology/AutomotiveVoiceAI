@@ -3,3 +3,4 @@ pandas
 pymssql
 setuptools
 pyodbc
+azure-cognitiveservices-speech
