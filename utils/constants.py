@@ -1,8 +1,12 @@
+from click import prompt
+
 MSG_ADX_AUTHENTICATION_FAILED = "ADX Authentication failed. Please re-login."
 MSG_ADX_SERVICE_AUTHENTICATION_FAILED = "ADX Service Authentication failed. Please reach out to Copilot Insight team at copilot-insight-engineering@adobe.com"
 MSG_PROFILE_ERROR = "You don't have a connection profile created on Copilot, please create one using ADX to start generating insights"
-MSG_GENERIC_ERROR = "Some issue has occurred, please retry after sometime or reach out to Copilot Insight team at " \
-                       "copilot-insight-engineering@adobe.com"
+MSG_GENERIC_ERROR = (
+    "Some issue has occurred, please retry after sometime or reach out to Copilot Insight team at "
+    "copilot-insight-engineering@adobe.com"
+)
 MSG_NO_LRU_CON = "No available LRU connection in insight-gen"
 MSG_QUERY_FAILURE = "Some Error has occured while running query on databricks, please validate generated query in query Section."
 MSG_CUSTOM = "please check query shown & change your query accordingly"
@@ -51,3 +55,40 @@ VALIDATION_RETRY_COUNT = 1
 KPI_COUNT = 1
 DEFAULT_NO_OF_DAYS = 7
 copilot_insight_env_label = "copilot_insight_env"
+
+prompt = """
+You are SQL Server expert and have access to below tables:
+
+```
+CREATE TABLE ServiceJobs (
+    JobID INT PRIMARY KEY IDENTITY(1,1),
+    ServiceDate DATE NOT NULL,
+    JobNumber VARCHAR(20) NOT NULL,
+    CustomerName VARCHAR(100) NOT NULL,
+    VehicleType VARCHAR(50) NOT NULL,
+    PartsCost DECIMAL(10,2) NOT NULL,
+    LaborCost DECIMAL(10,2) NOT NULL,
+    BillableHours DECIMAL(5,2) NOT NULL,
+    TechnicianName VARCHAR(100) NOT NULL,
+    CustomerSatisfactionRating INT CHECK (CustomerSatisfactionRating BETWEEN 1 AND 5)
+)
+```
+
+User Query:  "{question}"
+Request:
+- Suggest up to 4 Key Performance Indicators (KPIs) (with no space names) with trends and relationships.
+- Provide single class SQL queries (WITHOUT <distinct> CLAUSE) having at least one metric and one dimension.
+
+Requirements:
+- Provide a UNSTRINGIFY VALID JSON array (enclosed in square brackets:[]) with keys: "kpi_name", "query", "visualization_chart_name" and "referenced_source_columns".
+- Visualization chart names applicable for the query: Pie Chart, Bar Chart, Line Chart, Funnel Chart.
+- referenced_columns is comma seperated list of all the columns that are being referenced in select, where and group by clauses.
+
+Validations:
+- SQL queries must be valid and compatible with SQL Server.
+- Put LIMIT 100 in every query.
+- Query contains only the column names from the table definitions provided. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
+
+
+Please provide the response in JSON format, adhering strictly to these instructions, without introductory text, additional comments, or explanations.
+"""

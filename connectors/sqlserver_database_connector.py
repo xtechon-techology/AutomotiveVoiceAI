@@ -1,4 +1,3 @@
-
 import pyodbc
 import pandas as pd
 import logging
@@ -16,9 +15,9 @@ class SQLServerDatabaseConnector(DataConnector):
     Extends the base class DataConnector.
     """
 
-    def __init__(self, connection_string):
+    def __init__(self ):
         super().__init__()
-        self.connection_string = connection_string
+        self.connection_string = "Driver={ODBC Driver 18 for SQL Server};Server=tcp:voicepocsqlserver.database.windows.net,1433;Database=voicepocdb;Uid=voicepoc;Pwd=Officenoida@24dec;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
 
     def establish_connection(self):
         """
@@ -54,7 +53,7 @@ class SQLServerDatabaseConnector(DataConnector):
 
                 df = pd.DataFrame(result_dict)
                 summary = df.describe()
-                return summary, column_names, result_dict
+                return summary, column_names, result_dict, df
         except Exception as e:
             logger.error("Error executing query.", exc_info=True)
             raise RuntimeError(e)
@@ -88,9 +87,7 @@ class SQLServerDatabaseConnector(DataConnector):
                 f"WHERE TABLE_NAME='{table}' AND TABLE_SCHEMA='{schema}'"
             )
             _, column_names, results = self.execute_query_with_summary(query)
-            return [
-                {"column_name": row[0], "data_type": row[1]} for row in results
-            ]
+            return [{"column_name": row[0], "data_type": row[1]} for row in results]
         except Exception as e:
             logger.error("Error fetching column metadata.", exc_info=True)
             raise RuntimeError(e)
@@ -105,14 +102,15 @@ class SQLServerDatabaseConnector(DataConnector):
 # Example usage
 def main():
     connection_string = "Driver={ODBC Driver 18 for SQL Server};Server=tcp:voicepocsqlserver.database.windows.net,1433;Database=voicepocdb;Uid=voicepoc;Pwd=Officenoida@24dec;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
-    connector = SQLServerDatabaseConnector(connection_string)
+    connector = SQLServerDatabaseConnector()
 
     query = "SELECT TOP 10 * FROM ServiceJobs;"
-    summary, column_names, results = connector.execute_query_with_summary(query)
+    summary, column_names, results, df = connector.execute_query_with_summary(query)
 
     print(summary)
     print(column_names)
     print(results)
+
 
 if __name__ == "__main__":
     main()

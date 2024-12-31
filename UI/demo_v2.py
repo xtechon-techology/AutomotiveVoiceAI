@@ -1,8 +1,9 @@
+import streamlit as st
 import azure.cognitiveservices.speech as speechsdk
 from configs.config import azure_congnitive_services_config
 
 
-def recognize_speech_continuously():
+def recognize_speech_continuously_streamlit():
     """
     Continuously listens to the microphone and returns recognized speech as text.
     """
@@ -18,25 +19,26 @@ def recognize_speech_continuously():
         speech_config=speech_config, audio_config=audio_config
     )
 
-    print("Speak into your microphone. Say 'stop listening' to end.")
     recognized_text = []
     is_listening = True
 
     def handle_recognized(evt):
         nonlocal is_listening
-        print(f"Recognized: {evt.result.text}")
+        st.write(f"Recognized: {evt.result.text}")
         recognized_text.append(evt.result.text)
 
         # Stop listening if a specific phrase is recognized
         if "stop listening" in evt.result.text.lower():
-            print("Stop command recognized. Ending recognition.")
+            st.write("Stop command recognized. Ending recognition.")
             is_listening = False
             speech_recognizer.stop_continuous_recognition()
 
     def handle_canceled(evt):
-        print(f"Speech recognition canceled: {evt.result.cancellation_details.reason}")
+        st.write(
+            f"Speech recognition canceled: {evt.result.cancellation_details.reason}"
+        )
         if evt.result.cancellation_details.error_details:
-            print(f"Error details: {evt.result.cancellation_details.error_details}")
+            st.write(f"Error details: {evt.result.cancellation_details.error_details}")
         nonlocal is_listening
         is_listening = False
 
@@ -51,13 +53,17 @@ def recognize_speech_continuously():
         while is_listening:
             pass  # Keeps the script running until recognition stops
     except KeyboardInterrupt:
-        print("\nManual interruption received, stopping recognition.")
+        st.write("\nManual interruption received, stopping recognition.")
         speech_recognizer.stop_continuous_recognition()
 
     return " ".join(recognized_text)
 
 
-if __name__ == "__main__":
-    result = recognize_speech_continuously()
-    print("\nFinal Recognized Text:")
-    print(result)
+# Streamlit App Interface
+st.title("Azure Speech-to-Text Streamlit App")
+
+if st.button("Start Listening"):
+    st.write("Speak into your microphone. Say 'stop listening' to end.")
+    result = recognize_speech_continuously_streamlit()
+    st.write("\n**Final Recognized Text:**")
+    st.write(result)

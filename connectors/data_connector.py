@@ -5,11 +5,13 @@ from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
+
 class DataConnector:
     """
     A base class for managing connections and executing operations.
     This class is intended to be extended by specific data processors.
     """
+
     VALIDATION_RETRY_LIMIT = 3
 
     def __init__(self):
@@ -22,7 +24,9 @@ class DataConnector:
         Establish a connection to the data source or service.
         Must be implemented by subclasses.
         """
-        raise NotImplementedError("The 'establish_connection' method must be implemented by the subclass.")
+        raise NotImplementedError(
+            "The 'establish_connection' method must be implemented by the subclass."
+        )
 
     def execute_operation(self, operation, **kwargs):
         """
@@ -36,7 +40,9 @@ class DataConnector:
             RuntimeError: If the session is not established.
         """
         if self.session is None:
-            raise RuntimeError("Session has not been established. Please establish a connection first.")
+            raise RuntimeError(
+                "Session has not been established. Please establish a connection first."
+            )
         pass
 
     def fetch_results(self, operation, **kwargs):
@@ -51,7 +57,9 @@ class DataConnector:
             RuntimeError: If the session is not established.
         """
         if self.session is None:
-            raise RuntimeError("Session has not been established. Please establish a connection first.")
+            raise RuntimeError(
+                "Session has not been established. Please establish a connection first."
+            )
         pass
 
     def terminate_session(self):

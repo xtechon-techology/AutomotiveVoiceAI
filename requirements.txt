@@ -4,3 +4,10 @@ pymssql
 setuptools
 pyodbc
 azure-cognitiveservices-speech
+streamlit
+openai
+plotly
+langchain
+langchain_openai
+langchain_core
+python-dotenv
