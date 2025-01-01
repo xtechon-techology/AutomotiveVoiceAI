@@ -46,7 +46,7 @@ def extract_dynamic_chart_call(kpi, data, column_names, function_signature, visu
         f"Chart function signature: {function_signature}\n"
         f"Based on the given context, please provide a valid function call "
         f"that helps generate a {visualisation_chart_name} for the given KPI and suitable axis labels. "
-        "Format your output as JSON:\n{format_instructions}"
+        "Format your output as JSON:\n{format_instructions}. Make sure x_column, y_column should be existing columns in column_names."
     )
     return prompt
 

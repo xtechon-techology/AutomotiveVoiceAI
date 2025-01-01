@@ -17,9 +17,7 @@ def generate_plotly_figure_js(data_frame, x_column, y_column, title, chart_type)
     }
 
     # if x_column is None or x_column == "": then only generate indicator chart
-    if x_column is None or x_column == "":
-        x_column = y_column
-        chart_type = 'Indicator Chart'
+
 
 
 
@@ -33,14 +31,23 @@ def generate_plotly_figure_js(data_frame, x_column, y_column, title, chart_type)
     if x_column in df_columns:
         data_frame = sort_dict_data(data_frame, x_column)
 
-    data_frame = date_parser(data_frame, x_column, y_column, chart_type)
+    if x_column is None or x_column == "" :
+        chart_type = 'Indicator Chart'
+    elif (y_column is None or y_column == "") and (x_column is not None and x_column != ""):
+        chart_type = 'Indicator Chart'
+        y_column = x_column
+        x_column = ""
 
-    # Fallback to Line Chart if Pie Chart has too many categories
-    if len(data_frame[x_column]) >= 8 and chart_type == "Pie Chart" and x_column in df_columns:
-        chart_type = 'Line Chart'
+    else:
+        data_frame = date_parser(data_frame, x_column, y_column, chart_type)
+        # Fallback to Line Chart if Pie Chart has too many categories
+        if len(data_frame[x_column]) >= 8 and chart_type == "Pie Chart" and x_column in df_columns:
+            chart_type = 'Line Chart'
 
-    if len(data_frame[x_column]) >= 8 and chart_type == "Bar Chart" and x_column in df_columns:
-        chart_type = 'Line Chart'
+        if len(data_frame[x_column]) >= 8 and chart_type == "Bar Chart" and x_column in df_columns:
+            chart_type = 'Line Chart'
+
+
 
     # Handle cases with single data column
     if len(data_frame) == 1 and len(df_columns) == 1:
@@ -71,7 +78,8 @@ def generate_plotly_figure_js(data_frame, x_column, y_column, title, chart_type)
             cells=dict(values=[data_frame[col] for col in data_frame.keys()], align='center')
         )
     elif chart_type == 'Indicator Chart':
-        value = sum(y_data) if isinstance(y_data, list) else y_data
+        # get single value from y_data
+        value = y_data[0]
         trace = go.Indicator(
             mode="gauge+number",
             value=value,

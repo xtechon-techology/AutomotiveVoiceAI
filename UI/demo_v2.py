@@ -6,6 +6,7 @@ from configs.config import azure_congnitive_services_config
 from connectors.sqlserver_database_connector import SQLServerDatabaseConnector
 from model.llm_kpi import get_llm_kpi_response
 from model.llm_openai import get_llm_response
+from utils.common_util import correct_json
 from visualiser.chart_handlers import generate_plotly_figure_js
 from dotenv import load_dotenv
 
@@ -104,7 +105,14 @@ if st.button("Start Listening"):
         kpi_response["text"] = kpi_response["text"].replace("\\", "")
 
         # Parse the kpi_response
-        kpi_response = json.loads(kpi_response["text"])
+        try:
+            kpi_response = json.loads(kpi_response["text"])
+        except:
+            clear_json = correct_json(kpi_response["text"])
+            kpi_response = json.loads(clear_json)
+
+
+
 
         # Print sql_query
         print(kpi_response["sql_query"])
