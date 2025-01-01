@@ -19,7 +19,7 @@ class SQLServerDatabaseConnector(DataConnector):
         super().__init__()
         self.connection_string = "Driver={ODBC Driver 18 for SQL Server};Server=tcp:voicepocsqlserver.database.windows.net,1433;Database=voicepocdb;Uid=voicepoc;Pwd=Officenoida@24dec;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
 
-    def establish_connection(self):
+    def establish_connection(self, retry_count=3):
         """
         Establish a connection to the SQL Server database.
         """
@@ -28,6 +28,8 @@ class SQLServerDatabaseConnector(DataConnector):
             logger.info("Successfully connected to SQL Server.")
         except Exception as e:
             logger.error("Failed to connect to SQL Server.", exc_info=True)
+            if(retry_count > 0):
+                self.establish_connection(retry_count - 1)
             raise RuntimeError("Failed to establish connection.")
 
     def execute_query_with_summary(self, query):

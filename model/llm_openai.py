@@ -12,12 +12,10 @@ from langchain.chains import LLMChain
 
 from connectors.sqlserver_database_connector import SQLServerDatabaseConnector
 from response.sql_query_response import SQLQueryResponse
+from visualiser.chart_handlers import generate_plotly_figure_js
 
 
-# Create the main function
-if __name__ == "__main__":
-    # Load environment variables
-    load_dotenv()
+def get_llm_response(user_question):
 
     # Create prompt template for the KPI suggestions
     prompt = """
@@ -54,23 +52,20 @@ if __name__ == "__main__":
 
     Please provide the response in JSON format, adhering strictly to these instructions, without introductory text, additional comments, or explanations.
     """
-
     # Create PromptTemplate object with the KPI prompt template
     prompt_template = PromptTemplate(
         input_variables=["question", "format_instructions"], template=prompt
     )
-
     # Create LLM object with ChatOpenAI model
     llm = ChatOpenAI(temperature=0.5, model="gpt-4o")
-
     # Create a chain of PromptTemplate and LLM objects with the user input
-    runnable = LLMChain(llm=llm, prompt=prompt_template, output_parser=JsonOutputParser(pydantic_object=SQLQueryResponse))
-    user_question = (
-        "How many vehicles were serviced each month over the last three months?"
-    )
+    runnable = LLMChain(llm=llm, prompt=prompt_template,
+                        output_parser=JsonOutputParser(pydantic_object=SQLQueryResponse))
+    # user_question = (
+    #     "How many vehicles were serviced each month over the last three months?"
+    # )
     parser = JsonOutputParser(pydantic_object=SQLQueryResponse)
     format_instructions = parser.get_format_instructions()
-
     # runnable = prompt | llm | parser
     response = runnable.invoke(
         {
@@ -78,6 +73,17 @@ if __name__ == "__main__":
             "question": user_question,
         }
     )
+    return response
+
+
+# Create the main function
+if __name__ == "__main__":
+    # Load environment variables
+    load_dotenv()
+    user_question = (
+        "How many vehicles were serviced each month over the last three months?"
+    )
+    response = get_llm_response(user_question)
 
     sql_connector = SQLServerDatabaseConnector()
 
@@ -97,7 +103,9 @@ if __name__ == "__main__":
         print(f"Column Names: {column_names}")
         print(f"Results: {results}")
         print(f"Dataframe: {df}")
+        chart_result = generate_plotly_figure_js(df, column_names[0], column_names[1], text['kpi_name'], text['visualization_chart_name'])
+
+        print(f"Chart Result: {chart_result}")
 
 
-
-    # print(response)
+    print(response)
