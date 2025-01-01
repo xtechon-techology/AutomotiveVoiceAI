@@ -1,3 +1,5 @@
+from datetime import time
+
 import pyodbc
 import pandas as pd
 import logging
@@ -29,6 +31,8 @@ class SQLServerDatabaseConnector(DataConnector):
         except Exception as e:
             logger.error("Failed to connect to SQL Server.", exc_info=True)
             if(retry_count > 0):
+                self.terminate_session()
+                time.sleep(retry_count)
                 self.establish_connection(retry_count - 1)
             raise RuntimeError("Failed to establish connection.")
 

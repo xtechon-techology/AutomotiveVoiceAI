@@ -7,14 +7,20 @@ connection_string = "Driver={ODBC Driver 18 for SQL Server};Server=tcp:voicepocs
 conn = pyodbc.connect(connection_string)
 cursor = conn.cursor()
 
+# # Random Data
+# vehicle_types = [
+#     "Toyota Camry",
+#     "Honda Civic",
+#     "Tesla Model 3",
+#     "Ford F-150",
+#     "Chevrolet Bolt",
+# ]
+
 # Random Data
 vehicle_types = [
-    "Toyota Camry",
-    "Honda Civic",
-    "Tesla Model 3",
-    "Ford F-150",
-    "Chevrolet Bolt",
+    "EV"
 ]
+
 technicians = ["John Doe", "Jane Smith", "Tom Johnson", "Emily Davis"]
 customer_names = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank"]
 ratings = [1, 2, 3, 4, 5]
@@ -22,7 +28,7 @@ ratings = [1, 2, 3, 4, 5]
 start_date = datetime.date.today() - datetime.timedelta(days=90)
 end_date = datetime.date.today()
 
-for _ in range(500):
+for _ in range(10):
     service_date = start_date + datetime.timedelta(days=random.randint(0, 89))
     job_number = f"JOB-{random.randint(1000, 9999)}"
     customer_name = random.choice(customer_names)

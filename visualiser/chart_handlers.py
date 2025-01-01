@@ -1,10 +1,11 @@
-import json
-import dateutil.parser as parser
+import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
 import random
-import plotly.graph_objs as go
-import plotly.io as pio
+import dateutil.parser as parser
+from pyarrow import int64
+
 
 def generate_plotly_figure_js(data_frame, x_column, y_column, title, chart_type):
     chart_type_mapping = {
@@ -16,16 +17,10 @@ def generate_plotly_figure_js(data_frame, x_column, y_column, title, chart_type)
         'Indicator Chart': 'indicator'
     }
 
-    # if x_column is None or x_column == "": then only generate indicator chart
-
-
-
-
-
     # Extract columns from DataFrame
     df_columns = list(data_frame.keys())
 
-    # Trim and preprocess data (functions assumed to be defined elsewhere)
+    # Trim and preprocess data
     data_frame = trim_lists(data_frame, 400)
 
     if x_column in df_columns:
@@ -49,6 +44,8 @@ def generate_plotly_figure_js(data_frame, x_column, y_column, title, chart_type)
 
 
 
+
+
     # Handle cases with single data column
     if len(data_frame) == 1 and len(df_columns) == 1:
         y_column = df_columns[0]
@@ -57,51 +54,93 @@ def generate_plotly_figure_js(data_frame, x_column, y_column, title, chart_type)
         x_data = [1]
     else:
         x_data = data_frame[x_column]
+        if isinstance(y_column, list):
+            y_data = [data_frame[col] for col in y_column]
+        else:
+            y_data = data_frame[y_column]
+
+
+    if isinstance(y_column, list):
+        y_data = [data_frame[col] for col in y_column]
+    else:
         y_data = data_frame[y_column]
 
+    # if (x_column is not None and x_column != ""):
+    #     x_data = data_frame[x_column] if x_column else [f"Category {i + 1}" for i in range(
+    #         len(y_data[0]) if isinstance(y_data, list) else len(y_data))]
+
     # Define chart-specific logic
+    traces = []
     if chart_type == 'Bar Chart':
-        color = generate_random_color()
-        trace = go.Bar(x=x_data, y=y_data, marker=dict(color=color))
+        if isinstance(y_data, list):
+            for y, col in zip(y_data, y_column):
+                color = generate_random_color()
+                traces.append(go.Bar(x=x_data, y=y, name=col, marker=dict(color=color)))
+        else:
+            color = generate_random_color()
+            traces.append(go.Bar(x=x_data, y=y_data, marker=dict(color=color)))
     elif chart_type == 'Line Chart':
-        color = generate_random_color()
-        trace = go.Scatter(x=x_data, y=y_data, mode='lines', line=dict(color=color))
+        if isinstance(y_data, list):
+            for y, col in zip(y_data, y_column):
+                color = generate_random_color()
+                traces.append(go.Scatter(x=x_data, y=y, mode='lines', name=col, line=dict(color=color)))
+        else:
+            color = generate_random_color()
+            traces.append(go.Scatter(x=x_data, y=y_data, mode='lines', line=dict(color=color)))
     elif chart_type == 'Pie Chart':
         colors = [generate_random_color() for _ in range(len(x_data))]
-        trace = go.Pie(labels=x_data, values=y_data, marker=dict(colors=colors))
+        traces.append(go.Pie(labels=x_data, values=y_data, marker=dict(colors=colors)))
     elif chart_type == 'Funnel Chart':
         color = generate_random_color()
-        trace = go.Funnel(y=y_data, x=x_data, marker=dict(color=color))
+        traces.append(go.Funnel(y=y_data, x=x_data, marker=dict(color=color)))
     elif chart_type == 'Table Chart':
-        trace = go.Table(
+        traces.append(go.Table(
             header=dict(values=list(data_frame.keys()), align='center'),
             cells=dict(values=[data_frame[col] for col in data_frame.keys()], align='center')
-        )
+        ))
     elif chart_type == 'Indicator Chart':
-        # get single value from y_data
-        value = y_data[0]
-        trace = go.Indicator(
+        # Extract a single numeric value from y_data
+        if isinstance(y_data, pd.Series):
+            value = y_data.iloc[0]  # Take the first value from the Series
+        elif isinstance(y_data, (list, np.ndarray, tuple)):
+            value = y_data[0] if len(y_data) > 0 else None  # Take the first value from list/array/tuple
+        else:
+            value = y_data  # Use directly if it's already a number
+
+            # Convert to native Python int or float
+        if isinstance(value, (np.integer, np.floating)):
+            value = value.item()  # Convert NumPy type to native Python type
+
+        if not isinstance(value, (int, float)):
+            raise ValueError(
+                f"Expected a numeric value for 'Indicator Chart', got {type(value).__name__} with value: {value}")
+
+        traces.append(go.Indicator(
             mode="gauge+number",
             value=value,
             title={'text': title},
             domain={'x': [0, 1], 'y': [0, 1]}
-        )
+        ))
     else:
         raise ValueError("Invalid chart type. Supported types are: 'bar', 'line', 'pie', 'funnel', 'table', 'indicator'.")
 
     # Create layout with a title
+    y_title = ', '.join(y_column) if isinstance(y_column, list) else y_column
+
     layout = go.Layout(
         title={
             'text': title,
             'x': 0.5,  # Center-align the title
             'font': {'size': 18}
         },
+        xaxis=dict(title=x_column),
+        yaxis=dict(title=y_title),
         plot_bgcolor="#f9f9f9",  # Light gray background for the plot
         paper_bgcolor="#ffffff",  # White background for the chart
     )
 
     # Create the figure
-    figure = go.Figure(data=[trace], layout=layout)
+    figure = go.Figure(data=traces, layout=layout)
 
     # Export to JSON and image
     figure_json = pio.to_json(figure)
@@ -109,163 +148,10 @@ def generate_plotly_figure_js(data_frame, x_column, y_column, title, chart_type)
     pio.write_image(figure, image_path, format='png')
 
     return figure_json, image_path
-
 
 def generate_random_color():
     """Generates a random HEX color."""
     return "#" + "".join(random.choices("0123456789ABCDEF", k=6))
-
-def generate_plotly_figure_js_v0(data_frame, x_column, y_column, title, chart_type):
-    chart_type_mapping = {
-        'Bar Chart': 'bar',
-        'Line Chart': 'line',
-        'Pie Chart': 'pie',
-        'Funnel Chart': 'funnel'
-    }
-
-    # Extract columns from DataFrame
-    df_columns = list(data_frame.keys())
-
-    # Trim and preprocess data (functions assumed to be defined elsewhere)
-    data_frame = trim_lists(data_frame, 400)
-
-    if x_column in df_columns:
-        data_frame = sort_dict_data(data_frame, x_column)
-
-    data_frame = date_parser(data_frame, x_column, y_column, chart_type)
-
-    # Fallback to Line Chart if Pie Chart has too many categories
-    if len(data_frame[x_column]) >= 8 and chart_type == "Pie Chart" and x_column in df_columns:
-        chart_type = 'Line Chart'
-
-    # Handle cases with single data column
-    if len(data_frame) == 1 and len(df_columns) == 1:
-        y_column = df_columns[0]
-        y_data = data_frame[df_columns[0]]
-        x_column = "x-axis"
-        x_data = [1]
-    else:
-        x_data = data_frame[x_column]
-        y_data = data_frame[y_column]
-
-    # Define color schemes for different chart types
-    if chart_type == 'Bar Chart':
-        colors = [generate_random_color() for _ in range(len(x_data))]
-        trace = go.Bar(x=x_data, y=y_data, marker=dict(color=colors))
-    elif chart_type == 'Line Chart':
-        color = generate_random_color()
-        trace = go.Scatter(x=x_data, y=y_data, mode='lines', line=dict(color=color))
-    elif chart_type == 'Pie Chart':
-        colors = [generate_random_color() for _ in range(len(x_data))]
-        trace = go.Pie(labels=x_data, values=y_data, marker=dict(colors=colors))
-    elif chart_type == 'Funnel Chart':
-        color = generate_random_color()
-        trace = go.Funnel(y=y_data, x=x_data, marker=dict(color=color))
-    else:
-        raise ValueError("Invalid chart type. Supported types are: 'bar', 'line', 'pie', 'funnel'.")
-
-    # Create layout with a title
-    layout = go.Layout(
-        title={
-            'text': title,
-            'x': 0.5,  # Center-align the title
-            'font': {'size': 18}
-        },
-        plot_bgcolor="#f9f9f9",  # Light gray background for the plot
-        paper_bgcolor="#ffffff",  # White background for the chart
-    )
-
-    # Create the figure
-    figure = go.Figure(data=[trace], layout=layout)
-
-    # Export to JSON and image
-    figure_json = pio.to_json(figure)
-    image_path = f"{title.replace(' ', '_').lower()}_chart.png"
-    pio.write_image(figure, image_path, format='png')
-
-    return figure_json, image_path
-
-
-
-def generate_plotly_chart_js(data_frame, x_column, y_column, title, chart_type):
-    # Define a dictionary to map chart types to Plotly chart types
-    chart_type_mapping = {
-        'Bar Chart': 'bar',
-        'Line Chart': 'line',
-        'Pie Chart': 'pie',
-        'Funnel Chart': 'funnel'
-    }
-    df_columns = list(data_frame.keys())
-
-    data_frame = trim_lists(data_frame, 400)
-
-    # if x_column is None or x_column == "":
-    #     if(len(df_columns)>1):
-    #         x_column =df_columns[0]
-    #     else:
-    #         x_column = "x"
-
-    if len(data_frame[x_column]) >= 8 and chart_type == "Pie Chart" and x_column in df_columns:
-        chart_type = 'Line Chart'
-
-    # if y_column is None or y_column == "":
-    #     if(len(df_columns)>1):
-    #         y_column =df_columns[1]
-    #     else:
-    #         y_column = df_columns[0]
-
-    if x_column in df_columns:
-        data_frame = sort_dict_data(data_frame, x_column)
-
-    data_frame = date_parser(data_frame, x_column, y_column, chart_type)
-
-    if len(data_frame) == 1 and len(df_columns) == 1:
-        y_column = df_columns[0]
-        y_data = data_frame[df_columns[0]]
-        x_column = "x-axis"
-        x_data = [1]
-    else:
-        x_data = data_frame[x_column]
-        y_data = data_frame[y_column]
-
-    # Check if the chart_type is valid
-    if chart_type not in chart_type_mapping:
-        raise ValueError(
-            "Invalid chart_type. Supported chart types are: 'Bar Chart', 'Line Chart', 'Pie Chart', 'Funnel Chart'")
-
-    # Create the JavaScript code for the selected chart type
-    js_code = f'''
-      // Extract data from the data frame
-      var data = {{
-        x: {json.dumps(x_data)},
-        y: {json.dumps(y_data)},
-        type: '{chart_type_mapping[chart_type]}',
-        marker: {{
-          color: 'rgb(0, 128, 255)'
-        }}
-      }};
-
-      // Create the layout for the chart
-      var layout = {{
-        title: '{title}',
-        xaxis: {{
-          title: '{x_column}'
-        }},
-        yaxis: {{
-          title: '{y_column}'
-        }}
-      }};
-
-      // Plot the chart using Plotly
-      Plotly.newPlot('chartId', [data], layout);
-    '''
-
-    if chart_type == 'Pie Chart':
-        js_code = js_code.replace("x:", "labels:")
-        js_code = js_code.replace("y:", "values:")
-
-    return js_code
-
 
 def sort_dict_data(data_dict, sort_column):
     # Get the data from the dictionary
@@ -288,12 +174,17 @@ def sort_dict_data(data_dict, sort_column):
         sorted_data_lists = list(zip(*sorted_data))
 
         # Create a new dictionary with the sorted data
-        sorted_dict = {column: sorted_data_list for column, sorted_data_list in
-                       zip(data_dict.keys(), sorted_data_lists)}
+        sorted_dict = {column: sorted_data_list for column, sorted_data_list in zip(data_dict.keys(), sorted_data_lists)}
 
         return sorted_dict
     except Exception as e:
         return data_dict
+
+def trim_lists(dictionary, m):
+    trimmed_dict = {}
+    for key, value in dictionary.items():
+        trimmed_dict[key] = value[:m]
+    return trimmed_dict
 
 
 def date_parser(data_dict, x_column, y_column, chart_type):
@@ -319,10 +210,3 @@ def date_parser(data_dict, x_column, y_column, chart_type):
 
     # print(data_dict)
     return data_dict
-
-
-def trim_lists(dictionary, m):
-    trimmed_dict = {}
-    for key, value in dictionary.items():
-        trimmed_dict[key] = value[:m]
-    return trimmed_dict

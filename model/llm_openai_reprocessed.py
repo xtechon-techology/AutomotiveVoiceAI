@@ -15,7 +15,7 @@ from response.sql_query_response import SQLQueryResponse
 from visualiser.chart_handlers import generate_plotly_figure_js
 
 
-def get_llm_response(user_question):
+def get_llm_response_reprocessed(user_question, previous_query, previous_query_error):
 
     # Create prompt template for the KPI suggestions
     prompt = """
@@ -50,11 +50,15 @@ def get_llm_response(user_question):
     - SQL queries must be valid and compatible with SQL Server.
     - Query contains only the column names from the table definitions provided. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
 
+    Previous Query: "{previous_query}"
+    
+    Previous Query Execution Error: "{previous_query_error}"
+         
     Please provide the response in JSON format, adhering strictly to these instructions, without introductory text, additional comments, or explanations.
     """
     # Create PromptTemplate object with the KPI prompt template
     prompt_template = PromptTemplate(
-        input_variables=["question", "format_instructions"], template=prompt
+        input_variables=["question", "format_instructions", "previous_query", "previous_query_error"], template=prompt
     )
     # Create LLM object with ChatOpenAI model
     llm = ChatOpenAI(temperature=0.5, model="gpt-4o")
@@ -71,41 +75,11 @@ def get_llm_response(user_question):
         {
             "format_instructions": format_instructions,
             "question": user_question,
+            "previous_query": previous_query,
+            "previous_query_error": previous_query_error
         }
     )
     return response
 
 
-# Create the main function
-if __name__ == "__main__":
-    # Load environment variables
-    load_dotenv()
-    user_question = (
-        "How many vehicles were serviced each month over the last three months?"
-    )
-    response = get_llm_response(user_question)
 
-    sql_connector = SQLServerDatabaseConnector()
-
-
-
-    # Print the response's each KPI, query, visualization chart name, and referenced columns
-    print(f"Question: {response['question']}")
-    print(f"Format Instructions: {response['format_instructions']}")
-    for text in response["text"]:
-        print(f"KPI Name: {text['kpi_name']}")
-        print(f"Query: {text['query']}")
-        print(f"Visualization Chart Name: {text['visualization_chart_name']}")
-        print(f"Referenced Source Columns: {text['referenced_source_columns']}")
-        query = text['query']
-        summary, column_names, results, df = sql_connector.execute_query_with_summary(query)
-        print(f"Summary: {summary}")
-        print(f"Column Names: {column_names}")
-        print(f"Results: {results}")
-        print(f"Dataframe: {df}")
-        chart_result = generate_plotly_figure_js(df, column_names[0], column_names[1], text['kpi_name'], text['visualization_chart_name'])
-
-        print(f"Chart Result: {chart_result}")
-
-
-    print(response)
