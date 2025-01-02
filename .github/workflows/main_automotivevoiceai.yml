@@ -26,11 +26,10 @@ jobs:
           curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           sudo apt-get update
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
-          sudo apt-get update && apt-get install -y \
-            libasound2 \
-            libstdc++6 \
-            libgcc1 \
-            libffi7
+
+      - name: Install speech libraries
+        run: |
+          sudo apt-get update && apt-get install -y libasound2 libstdc++6 libgcc1 libffi7
 
       - name: Create and start virtual environment
         run: |
