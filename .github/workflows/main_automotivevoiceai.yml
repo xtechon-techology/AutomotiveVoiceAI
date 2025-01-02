@@ -29,7 +29,9 @@ jobs:
 
       - name: Install speech libraries
         run: |
-          sudo apt-get update && apt-get install -y libasound2 libstdc++6 libgcc1 libffi7
+          sudo rm -f /var/lib/dpkg/lock-frontend
+          sudo apt-get update && sudo apt-get install -y libasound2 libstdc++6 libgcc1 libffi7
+        shell: bash
 
       - name: Create and start virtual environment
         run: |
