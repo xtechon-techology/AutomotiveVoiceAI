@@ -24,6 +24,7 @@ st.markdown(
     <div style="text-align: center;">
         <h1>💬 Automotive Voice AI</h1>
         <p>Revolutionizing <b>Data Insights</b> through Voice Commands</p>
+        <p>Turn your voice into <b>actionable insights</b>.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -31,9 +32,9 @@ st.markdown(
 
 load_dotenv()
 # Enhanced Streamlit App Interface
-st.title("Voice-Driven Business Intelligence Platform")
-st.subheader("Revolutionizing Data Insights through Voice Commands")
-st.markdown("**Turn your voice into actionable insights.**")
+# st.title("Voice-Driven Business Intelligence Platform")
+# st.subheader("Revolutionizing Data Insights through Voice Commands")
+# st.markdown("**Turn your voice into actionable insights.**")
 
 # st.subheader("Voice / Query Interface")
 # text_mode = st.toggle("Text Query Mode", False)
@@ -48,13 +49,13 @@ st_progress = st.progress(0)
 # Voice Mode
 with col_voice:
     st.subheader("Voice Mode")
-    st.write("Speak into your microphone. Say 'stop listening' to end.")
+    # st.write("Speak into your microphone. Say 'stop listening' to end.")
     # voice_button = st.button("Start Listening")
     audio_value = st.audio_input("Record a voice message")
     blob_url = None
     file_path = None
-    if audio_value:
-        st.audio(audio_value)
+    # if audio_value:
+    #     st.audio(audio_value)
 with col_text:
     st.subheader("Query Mode")
     text_input = st.text_area("Enter your query here")
@@ -67,14 +68,14 @@ if audio_value or (query_submit and text_input):
             result = text_input
             st.subheader("1- Text Query")
         elif audio_value:
-            st.audio(audio_value)
+            # st.audio(audio_value)
             # result = recognize_speech_continuously_streamlit()
             file_path = save_streamlit_audio_to_local_file(audio_value)
-            st.write("File saved at:", file_path)
+            # st.write("File saved at:", file_path)
             cloud_file_path = upload_to_azure(file_path)
-            st.write("File successfully uploaded and accessible at:", cloud_file_path)
+            # st.write("File successfully uploaded and accessible at:", cloud_file_path)
             downloaded_file_name = get_downloaded_blob_file(file_path)
-            st.write("File downloaded successfully:", downloaded_file_name)
+            # st.write("File downloaded successfully:", downloaded_file_name)
             result = get_audio_translation_from_file(downloaded_file_name)
             st.subheader("1- Voice Translation")
 
