@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <script>
+        let audioContext;
+        let recorder;
+        let audioChunks = [];
+
+        function startRecording() {
+            alert("Attempting to start recording...");
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function (stream) {
+                    alert("Microphone access granted.");
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    recorder = new MediaRecorder(stream);
+                    audioChunks = []; // Reset audio chunks
+
+                    recorder.ondataavailable = function (event) {
+                        alert("Data available from recorder.");
+                        audioChunks.push(event.data);
+                    };
+
+                    recorder.onstop = function () {
+                        alert("Recording stopped. Processing audio...");
+                        let audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        let reader = new FileReader();
+                        reader.onloadend = function () {
+                            alert("Audio converted to Base64.");
+                        };
+                        reader.readAsDataURL(audioBlob);
+                    };
+
+                    recorder.start();
+                    alert("Recording started...");
+                })
+                .catch(function (err) {
+                    alert("Microphone access denied: " + err);
+                });
+        }
+
+        function stopRecording() {
+            alert("Attempting to stop recording...");
+            if (recorder && recorder.state === "recording") {
+                recorder.stop();
+                alert("Recording stopped successfully.");
+            } else {
+                alert("No active recording to stop.");
+            }
+        }
+    </script>
+    <button onclick="startRecording()">Start Recording</button>
+    <button onclick="stopRecording()">Stop Recording</button>
+</body>
+</html>

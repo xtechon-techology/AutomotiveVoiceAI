@@ -1,4 +1,4 @@
-from datetime import time
+import time
 
 import pyodbc
 import pandas as pd

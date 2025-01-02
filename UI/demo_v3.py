@@ -32,16 +32,37 @@ st.title("Voice-Driven Business Intelligence Platform")
 st.subheader("Revolutionizing Data Insights through Voice Commands")
 st.markdown("**Turn your voice into actionable insights.**")
 
+# st.subheader("Voice / Query Interface")
+# text_mode = st.toggle("Text Query Mode", False)
+
+col_voice, col_text = st.columns(2)
+
+
 # Progress Bar
 steps = ["Voice Translation", "Query Generation", "Query Validation", "Query Execution", "Chart Generation"]
 st_progress = st.progress(0)
 
-if st.button("Start Listening"):
+# Voice Mode
+with col_voice:
+    st.subheader("Voice Mode")
+    st.write("Speak into your microphone. Say 'stop listening' to end.")
+    voice_button = st.button("Start Listening")
+with col_text:
+    st.subheader("Query Mode")
+    text_input = st.text_area("Enter your query here")
+    query_submit = st.button("Submit Query")
+
+if voice_button or (query_submit and text_input):
     col1, col2 = st.columns(2)
     with col1:
-        result = recognize_speech_continuously_streamlit()
-        st.subheader("1- Voice Translation")
-        st.write("Speak into your microphone. Say 'stop listening' to end.")
+        if (query_submit and text_input):
+            result = text_input
+            st.subheader("1- Text Query")
+        else:
+            result = recognize_speech_continuously_streamlit()
+            st.subheader("1- Voice Translation")
+
+
         st.write(f"Final Recognized Text: {result}")
         st_progress.progress(20)
 
