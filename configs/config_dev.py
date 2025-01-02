@@ -13,6 +13,8 @@ azure_congnitive_services_conf = {
     "speech_service_key": "COhUF6rW70pSarwYKQr12oorTPpWNzOkWAsPUW4yPIyosYM96QlEJQQJ99ALACYeBjFXJ3w3AAAYACOGLUN5",
     "speech_service_region": "eastus",
     "speech_service_endpoint": "https://eastus.api.cognitive.microsoft.com/",
+    "blob_service_connection_string": "DefaultEndpointsProtocol=https;AccountName=automotivestorage;AccountKey=OIKjIkzgC/c+sPLrUappeuJO8/felfUV2YTuiiX1s0nlTUH9IuhEjnhnlbw9DyJmU+KNjzsLxlWD+AStLINdqA==;EndpointSuffix=core.windows.net",
+    "blob_container_name": "audiocontainer"
 }
 openai_conf = {
     "openai_api_key": "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"
