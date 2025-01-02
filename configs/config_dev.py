@@ -20,5 +20,7 @@ openai_conf = {
     "openai_api_key": "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"
 }
 
+
+
 # working but quota finished
 # "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"
